@@ -19,7 +19,7 @@ Goals, be Cell agnostic, let the Tape deal with writing to the actual cells
 
 use crate::tape::Movement;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Cache<const W: usize> {
     buffer_l: [u8; W], // Can't use [u8; W*2]
     buffer_r: [u8; W],
@@ -62,11 +62,17 @@ impl<const W: usize> Cache<W> {
             Side::Left => {
                 let old = self.buffer_l[self.cursor];
                 self.buffer_l[self.cursor] = symb;
+                if old != symb {
+                    self.dirty.0 = true
+                }
                 old
             }
             Side::Right => {
                 let old = self.buffer_r[self.cursor];
                 self.buffer_r[self.cursor] = symb;
+                if old != symb {
+                    self.dirty.1 = true
+                }
                 old
             }
         }
@@ -212,7 +218,7 @@ pub enum ShiftRet {
     OutCacheFail(Side),
 }
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub enum Side {
     Left,
     Right,

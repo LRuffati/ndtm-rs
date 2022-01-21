@@ -17,6 +17,7 @@ use crate::tape::cells::Cell;
 mod cache;
 mod cells;
 
+#[derive(Debug)]
 pub struct Tape<const W: usize> {
     cache: Cache<W>,
     empty: u8,
@@ -38,7 +39,7 @@ impl<const W: usize> Tape<W> {
 
         let left = cells::empty_cell();
 
-        let empty_buff = [0u8; W];
+        let empty_buff = [empty; W];
         let cache = Cache::new(
             if let Some(x) = head.read() {
                 x

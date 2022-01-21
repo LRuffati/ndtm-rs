@@ -137,6 +137,7 @@ impl RuleStore {
     }
 
     pub fn compute_dist(&mut self) {
+        return;
         let mut queue = &mut self.fin_s;
         let mut next_q = BTreeSet::new();
         let mut tmp_q = BTreeSet::new();
@@ -155,6 +156,7 @@ impl RuleStore {
 
     /// Returns the distance from the state to a final state
     pub fn distance(&self, state: usize) -> usize {
-        *self.states_dist.get(&state).unwrap()
+        //*self.states_dist.get(&state).unwrap()
+        0
     }
 }

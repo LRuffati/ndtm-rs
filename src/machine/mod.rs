@@ -2,16 +2,19 @@ use crate::rules::{Output, RuleStore, Transition};
 use crate::tape::Tape;
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
+use std::mem::transmute;
 
 pub struct NDTM<'a, const W: usize> {
     rules: &'a RuleStore,
     machines: MachineStore<W>,
     /// The last index used to number a machine
     last_idx: usize,
+    pub some_undecided: bool,
+    max_step: usize,
 }
 
 impl<'a, const W: usize> NDTM<'a, W> {
-    pub fn new(tape: Tape<W>, rules: &'a RuleStore) -> Self {
+    pub fn new(tape: Tape<W>, rules: &'a RuleStore, max: usize) -> Self {
         let mut store = MachineStore::new();
         let first = TM::new(tape, 0, Option::None, 0, 0, rules.distance(0));
         store.push(first);
@@ -19,6 +22,8 @@ impl<'a, const W: usize> NDTM<'a, W> {
             rules,
             last_idx: 0,
             machines: store,
+            some_undecided: false,
+            max_step: max,
         }
     }
 
@@ -26,6 +31,10 @@ impl<'a, const W: usize> NDTM<'a, W> {
         let machine = self.machines.pop();
         return if let Some(mut machine) = machine {
             let id = machine.idx;
+            if machine.depth >= self.max_step {
+                self.some_undecided |= true;
+                return StepResult::Undecided { machine: id };
+            }
             let step_res = machine.step(self.rules);
             match step_res {
                 TMStepRes::Success => {
@@ -63,9 +72,15 @@ impl<'a, const W: usize> NDTM<'a, W> {
         };
     }
 
-    pub fn fastforward(&mut self, steps: usize) -> Vec<StepResult> {
+    pub fn fastforward(&mut self, steps: Option<usize>) -> Vec<StepResult> {
         let mut vec = Vec::new();
-        for _ in 0..steps {
+        let count = 0;
+        loop {
+            if let Some(m) = steps {
+                if count >= m {
+                    break;
+                }
+            }
             let r = self.step();
             match r {
                 r @ StepResult::Success { .. } => {
@@ -85,7 +100,9 @@ impl<'a, const W: usize> NDTM<'a, W> {
     }
 }
 
+#[derive(Debug)]
 pub enum StepResult {
+    Undecided { machine: usize },
     DetStep { machine: usize },
     Split { source: usize, new: Vec<usize> },
     BranchFail { machine: usize },

@@ -7,6 +7,7 @@ struct ConcreteCell<const W: usize> {
     buffer: [u8; W],
 }
 
+#[derive(Debug)]
 pub enum Cell<const W: usize> {
     Full {
         buffer: Rc<RefCell<[u8; W]>>,
@@ -21,6 +22,7 @@ pub enum Cell<const W: usize> {
     },
 }
 
+#[derive(Debug)]
 pub enum Link<const W: usize> {
     /// No neighbor was created here yet
     Edge,
@@ -208,15 +210,20 @@ pub fn empty_cell<const W: usize>() -> Cell<W> {
 
 /// Creates a chain of non empty cells using the given slice
 pub fn cells_from_slice<const W: usize>(buff: &[u8], empty: u8) -> Cell<W> {
+    dbg!(buff);
     let mut buff_tmp = [empty; W];
     let (full_cells, last_rem) = (buff.len() / W, buff.len() % W);
 
-    buff_tmp[0..last_rem].copy_from_slice(&buff[(W * full_cells)..]);
+    let rem_sl = &buff[(W * full_cells)..];
+    dbg!(rem_sl);
+    buff_tmp[0..last_rem].copy_from_slice(rem_sl);
 
     let mut head = full_cell(buff_tmp, None);
 
     for i in (0..full_cells).rev() {
-        let slice = &buff[i * W..i * (W + 1)];
+        dbg!(buff);
+        let slice = &buff[(i * W)..((i + 1) * W)];
+        dbg!(slice);
         buff_tmp.copy_from_slice(slice);
         head = full_cell(buff_tmp, Some(head));
     }
